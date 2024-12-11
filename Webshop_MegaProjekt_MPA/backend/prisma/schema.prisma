@@ -17,6 +17,7 @@ model Product {
   id Int @id @default(autoincrement())
   name String
   imageUrl String
+  material String?
   description String
-  price Int
+  price Float
 }
