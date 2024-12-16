@@ -20,4 +20,13 @@ model Product {
   material String?
   description String
   price Float
+  users User[] @relation()
+}
+
+
+model User {
+  id Int @id @default(autoincrement())
+  username String @unique
+  passsword String
+  products Product[]
 }
