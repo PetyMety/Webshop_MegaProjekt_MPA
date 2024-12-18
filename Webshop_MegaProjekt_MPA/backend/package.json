@@ -33,6 +33,7 @@
     "@nestjs/typeorm": "^10.0.2",
     "@prisma/client": "^6.0.1",
     "argon2": "^0.41.1",
+    "auth-context": "^1.0.6",
     "auth-guard": "^1.0.12",
     "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.3",
