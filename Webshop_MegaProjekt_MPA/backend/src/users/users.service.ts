@@ -9,11 +9,11 @@ import { randomBytes } from 'crypto';
 @Injectable()
 export class UsersService {
 
-  constructor(private readonly db: PrismaService){}
+  constructor(private readonly prisma: PrismaService){}
 
   async create(createUserDto: CreateUserDto) {
     const hashedPw = await argon2.hash(createUserDto.password);
-    const newUser = await this.db.user.create({
+    const newUser = await this.prisma.user.create({
       data: {
         ...createUserDto,
         password:hashedPw,
@@ -24,12 +24,12 @@ export class UsersService {
   }
 
   async login(loginData: LoginDto){
-    const user = await this.db.user.findUniqueOrThrow({
+    const user = await this.prisma.user.findUniqueOrThrow({
       where: {email: loginData.email, username: loginData.username}
     });
       if(await argon2.verify(await user.password, loginData.password)){
         const token = randomBytes(32).toString('hex');
-        await this.db.token.create({
+        await this.prisma.token.create({
           data: {token,
             user: {
               connect: {id: user.id}
@@ -55,7 +55,7 @@ export class UsersService {
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     const hashedPw = await argon2.hash(updateUserDto.password);
-    const updateUser = await this.db.user.update({where: {id},
+    const updateUser = await this.prisma.user.update({where: {id},
       data: {
         ...updateUserDto,
         password:hashedPw,
@@ -70,7 +70,7 @@ export class UsersService {
   }
 
   async findUserByToken(token: string) {
-    const tokenData = await this.db.token.findUnique({
+    const tokenData = await this.prisma.token.findUnique({
       where: { token },
       include: { user: true }
     })
