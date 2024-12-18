@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 interface User {
   id: number;
   username: string;
   email: string;
+
 }
 
 interface AuthContextType {
@@ -12,6 +13,7 @@ interface AuthContextType {
   user: User | null;
   setUser: (user: User | null) => void;
 }
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -24,8 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-
 
 export function useAuth() {
   const context = useContext(AuthContext);
