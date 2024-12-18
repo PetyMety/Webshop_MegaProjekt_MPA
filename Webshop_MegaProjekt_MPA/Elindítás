@@ -1,1 +1,4 @@
-
+Program elindítása:
+XAMPP elindítása 
+Backend mappa -> Terminál -> npm install, npx prisma db push, npx prisma db seed, npm start:debug
+Frontend mappa -> Terminál -> npm install, npm run dev
