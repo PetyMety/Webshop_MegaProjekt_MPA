@@ -19,14 +19,22 @@ model Product {
   imageUrl String
   material String?
   description String
-  price Float
-  users User[] @relation()
+  price Float 
 }
 
 
 model User {
   id Int @id @default(autoincrement())
+  name String
   username String @unique
+  email String @unique
   passsword String
-  products Product[]
+  location String
+  tokens Token[]
+}
+
+model Token {
+  token String @id
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 }
