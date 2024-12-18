@@ -28,7 +28,7 @@ model User {
   name String
   username String @unique
   email String @unique
-  passsword String
+  password String
   location String
   tokens Token[]
 }

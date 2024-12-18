@@ -1,37 +1,83 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-
-import * as bcrypt from 'bcrypt';
+import { PrismaService } from 'src/prisma.service';
+import * as argon2 from 'argon2'
+import { LoginDto } from './dto/login-dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { email, password, role } = createUserDto;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = this.usersRepository.create({ email, password: hashedPassword, role });
-    return this.usersRepository.save(user);
+  constructor(private readonly db: PrismaService){}
+
+  async create(createUserDto: CreateUserDto) {
+    const hashedPw = await argon2.hash(createUserDto.password);
+    const newUser = await this.db.user.create({
+      data: {
+        ...createUserDto,
+        password:hashedPw,
+      }
+    });
+    delete newUser.password;
+    return newUser;
   }
 
-  async findOneByEmail(email: string): Promise<User> {
-    return this.usersRepository.findOne({ where: { email } });
+  async login(loginData: LoginDto){
+    const user = await this.db.user.findUniqueOrThrow({
+      where: {email: loginData.email, username: loginData.username}
+    });
+      if(await argon2.verify(await user.password, loginData.password)){
+        const token = randomBytes(32).toString('hex');
+        await this.db.token.create({
+          data: {token,
+            user: {
+              connect: {id: user.id}
+            }
+          }
+        })
+        return{
+          token: token,
+          userId: user.id,
+        }
+      }else{
+        throw new Error('Invalid password')
+      }
+    }
+
+  findAll() {
+    return `This action returns all users`;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<void> {
-    const { password, profile } = updateUserDto;
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
-    await this.usersRepository.update(id, { ...(password && { password: hashedPassword }), ...(profile && { profile }) });
+  findOne(id: number) {
+    return `This action returns a #${id} user`;
   }
 
-  async remove(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const hashedPw = await argon2.hash(updateUserDto.password);
+    const updateUser = await this.db.user.update({where: {id},
+      data: {
+        ...updateUserDto,
+        password:hashedPw,
+      }
+    });
+    delete updateUser.password;
+    return updateUser;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} user`;
+  }
+
+  async findUserByToken(token: string) {
+    const tokenData = await this.db.token.findUnique({
+      where: { token },
+      include: { user: true }
+    })
+    if (!tokenData) return null;
+    const user = tokenData.user;
+    delete user.password;
+    
+    return user;
   }
 }

@@ -1,45 +1,57 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, UseGuards, Req, BadRequestException, UnauthorizedException, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Request } from 'express';
-import { AuthService } from '../auth/auth.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { LoginDto } from './dto/login-dto';
+import { AuthGuard } from '@nestjs/passport';
+import { request } from 'https';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly authService: AuthService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
-  @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto) {
+    try{
+    return await this.usersService.create(createUserDto);
+    }catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new BadRequestException(["User or email is used"]);
+        }
+      }
+      throw e;
+    }
   }
-
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    return this.authService.login(body.email, body.password);
+  async login(@Body() loginData: LoginDto){
+    try{
+      return await this.usersService.login(loginData)
+    }catch{
+      throw new UnauthorizedException("Érvénytelen email, felhasznalonev és jelszó páros!");
+    }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  async getProfile(@Req() req: Request) {
-    return req.user;
+  @Get()
+  @UseGuards(AuthGuard('bearer'))
+  findAll(@Request() request) {
+    console.log(request.user);
+    return this.usersService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Patch('profile')
-  async updateProfile(@Req() req: Request, @Body() updateUserDto: UpdateUserDto) {
-    const user = req.user;
-    await this.usersService.update(user.id, updateUserDto);
-    return this.usersService.findOneByEmail(user.email);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(+id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete('profile')
-  async deleteProfile(@Req() req: Request) {
-    const user = req.user;
-    await this.usersService.remove(user.id);
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(+id, updateUserDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
   }
 }
