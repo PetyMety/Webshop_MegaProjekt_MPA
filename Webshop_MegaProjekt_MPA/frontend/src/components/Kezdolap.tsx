@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 import Menu from "../Menu";
 import { useAuth } from "../context/Contexts"; 
-import { useCart } from "../context/CartContext";
+import { useCart } from "../context/CartContext.tsx";
 
 interface Product {
     id: number,
