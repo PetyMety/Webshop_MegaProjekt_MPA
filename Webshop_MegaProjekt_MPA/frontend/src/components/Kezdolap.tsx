@@ -24,7 +24,7 @@ export default function Kezdolap(){
     const [errorServer, setErrorServer] = useState<string>("");
 
     useEffect(() => {
-        fetch("http://localhost:3000/termekek")
+        fetch("http://localhost:3000/products")
             .then((response) => { 
                 if (response.status === 404){
                     setErrorServer('A kért erőforrás nem található (404)!');
